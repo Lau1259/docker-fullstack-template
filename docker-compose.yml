@@ -1,0 +1,49 @@
+version: '3.9'
+services:
+  db:
+    image: "postgres:15-alpine"
+    container_name: app-db
+    restart: always
+    volumes:
+      - app-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: app-admin
+      POSTGRES_PASSWORD: app-admin
+
+  pg-admin:
+    image: dpage/pgadmin4
+    depends_on:
+      - db
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@app.com
+      PGADMIN_DEFAULT_PASSWORD: app-admin
+      PGADMIN_LISTEN_PORT: 80
+    ports:
+      - "19004:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+      - servers:/pgadmin4/servers.json
+  api:
+    build: ./server
+    container_name: app-bk
+    environment:
+      - DB_SERVER= app-db
+    ports:
+      - 19002:8080
+    depends_on:
+      - db
+
+  ui:
+    build: ./client
+    container_name: app-ui
+    ports:
+      - 19003:3000
+    depends_on:
+      - api
+
+volumes:
+  app-data:
+  pgadmin-data:
+  servers:
